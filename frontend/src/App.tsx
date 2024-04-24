@@ -51,8 +51,6 @@ function App() {
           col: colIndex,
         };
         socket.send(JSON.stringify(moveData));
-
-        // Toggle current player
         setCurrentPlayer(currentPlayer === "X" ? "O" : "X");
       }
     } else {
