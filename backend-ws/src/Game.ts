@@ -24,6 +24,7 @@ export class Game {
   }
   makeMove(
     socket: WebSocket,
+    userSocket: WebSocket[],
     player: string,
     move: {
       row: string;
@@ -41,10 +42,17 @@ export class Game {
         socket.send(JSON.stringify({ type: "board", board: this.board }));
         console.log("Move pushed Successfully");
         const message = JSON.stringify({ type: "move_made", row, col, symbol });
+        userSocket.forEach((user) => user.send(message));
         if (this.checkForWin(this.board, symbol)) {
-          socket.send(JSON.stringify({ type: "game_over", winner: symbol }));
+          userSocket.forEach((user) =>
+            user.send(
+              JSON.stringify({ type: "game_over", row, col, winner: symbol })
+            )
+          );
+          console.log(this.board);
+          console.log(symbol, "Winner");
         } else {
-          socket.send(message);
+          console.log(this.board);
         }
       }
     } catch (e) {

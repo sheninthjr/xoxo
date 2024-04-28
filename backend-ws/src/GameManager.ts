@@ -31,7 +31,9 @@ export class GameManager {
             type: "game_started",
             payload: { roomId },
           });
-          this.users.forEach((user) => user.send(gameStartedMessage));
+          this.users.forEach((socket) => {
+            socket.send(gameStartedMessage);
+          });
           this.pendingUser = null;
         } else {
           this.pendingUser = message.userId;
@@ -42,7 +44,7 @@ export class GameManager {
         const player: string = message.player;
         const game = this.games.find((game) => game.gameId === gameId.trim());
         if (game) {
-          game.makeMove(socket, player, message.move);
+          game.makeMove(socket, this.users, player, message.move);
         } else {
           console.log("No game found with gameId:", gameId);
         }
