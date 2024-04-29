@@ -15,6 +15,7 @@ export default function GameBoard() {
   const [turn, setTurn] = useState("");
   const player = useRecoilValue(userIdState);
   const socket = useSocket();
+  const [gameFinished, setGameFinished] = useState(false);
   const [currentPlayer, setCurrentPlayer] = useState<"X" | "O">("X");
 
   useEffect(() => {
@@ -22,6 +23,7 @@ export default function GameBoard() {
       socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         if (data.type === "game_over") {
+          setGameFinished(true);
           setWinner(data.winner);
         } else if (data.type === "move_made") {
           const { row, col, symbol } = data;
@@ -30,6 +32,7 @@ export default function GameBoard() {
             newBoard[row][col] = symbol;
             return newBoard;
           });
+          setCurrentPlayer(symbol === "X" ? "O" : "X");
           setTurn(symbol === "X" ? "O" : "X");
         } else if (data.type === "board") {
           setBoard(data.board);
@@ -56,7 +59,6 @@ export default function GameBoard() {
             gameId: gameId,
           })
         );
-
         setCurrentPlayer(currentPlayer === "X" ? "O" : "X");
       } else {
         console.error("Cell is already occupied");
@@ -83,15 +85,17 @@ export default function GameBoard() {
       <h1>Tic Tac Toe</h1>
       {winner ? <h2>Winner: {winner}</h2> : <h2>Turn: {turn}</h2>}
       <div className="board">
-        <table>
-          <tbody>
-            {board.map((row, rowIndex) => (
-              <tr key={rowIndex}>
-                {row.map((_, colIndex) => renderCell(rowIndex, colIndex))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {!gameFinished && (
+          <table>
+            <tbody>
+              {board.map((row, rowIndex) => (
+                <tr key={rowIndex}>
+                  {row.map((_, colIndex) => renderCell(rowIndex, colIndex))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

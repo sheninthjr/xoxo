@@ -6,6 +6,7 @@ export class Game {
   public player2: string | null;
   private board: string[][];
   private startTime: Date;
+  private symbolQueue: string[];
   constructor(
     player1: string,
     player2: string | null,
@@ -21,6 +22,7 @@ export class Game {
       ["-", "-", "-"],
     ];
     this.startTime = new Date();
+    this.symbolQueue = [];
   }
   makeMove(
     socket: WebSocket,
@@ -38,11 +40,21 @@ export class Game {
     console.log(symbol);
     try {
       if (this.board[rowIndex][colIndex] === "-") {
+        if (
+          this.symbolQueue.length > 0 &&
+          this.symbolQueue[this.symbolQueue.length - 1] === symbol
+        ) {
+          socket.send(JSON.stringify({ type: "board", board: this.board }));
+          console.log("Invalid move: Same symbol as last move");
+          return;
+        }
         this.board[rowIndex][colIndex] = symbol;
         socket.send(JSON.stringify({ type: "board", board: this.board }));
         console.log("Move pushed Successfully");
         const message = JSON.stringify({ type: "move_made", row, col, symbol });
         userSocket.forEach((user) => user.send(message));
+        this.symbolQueue.push(symbol);
+
         if (this.checkForWin(this.board, symbol)) {
           userSocket.forEach((user) =>
             user.send(
@@ -59,6 +71,7 @@ export class Game {
       return;
     }
   }
+
   checkForWin(board: string[][], symbol: string): boolean {
     for (let i = 0; i < 3; i++) {
       if (
