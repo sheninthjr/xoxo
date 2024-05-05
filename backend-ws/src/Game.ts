@@ -1,4 +1,5 @@
 import { WebSocket } from "ws";
+import { SocketManager } from "./SocketManager";
 
 export class Game {
   public gameId: string;
@@ -26,7 +27,6 @@ export class Game {
   }
   makeMove(
     socket: WebSocket,
-    userSocket: WebSocket[],
     player: string,
     move: {
       row: string;
@@ -52,20 +52,21 @@ export class Game {
         socket.send(JSON.stringify({ type: "board", board: this.board }));
         console.log("Move pushed Successfully");
         const message = JSON.stringify({ type: "move_made", row, col, symbol });
-        userSocket.forEach((user) => user.send(message));
-        this.symbolQueue.push(symbol);
+        SocketManager.getInstance().broadCast(this.gameId, message);
+        // userSocket.forEach((user) => user.send(message));
+        // this.symbolQueue.push(symbol);
 
-        if (this.checkForWin(this.board, symbol)) {
-          userSocket.forEach((user) =>
-            user.send(
-              JSON.stringify({ type: "game_over", row, col, winner: symbol })
-            )
-          );
-          console.log(this.board);
-          console.log(symbol, "Winner");
-        } else {
-          console.log(this.board);
-        }
+        // if (this.checkForWin(this.board, symbol)) {
+        //   userSocket.forEach((user) =>
+        //     user.send(
+        //       JSON.stringify({ type: "game_over", row, col, winner: symbol })
+        //     )
+        //   );
+        //   console.log(this.board);
+        //   console.log(symbol, "Winner");
+        // } else {
+        //   console.log(this.board);
+        // }
       }
     } catch (e) {
       return;

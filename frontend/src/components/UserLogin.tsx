@@ -1,15 +1,13 @@
 import { useEffect } from "react";
 import { useSocket } from "../hooks/useSocket";
 import { useNavigate } from "react-router-dom";
-import { useSetRecoilState } from "recoil";
+import { useRecoilValue } from "recoil";
 import { userIdState } from "../store/user";
 
 export default function UserLogin() {
   const socket = useSocket();
   const navigate = useNavigate();
-  const userId = crypto.randomUUID();
-  const setUserId = useSetRecoilState(userIdState);
-  setUserId(userId);
+  const userId = useRecoilValue(userIdState);
   const startGame = () => {
     if (socket) {
       socket.send(

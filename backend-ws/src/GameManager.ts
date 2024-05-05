@@ -1,24 +1,25 @@
 import { WebSocket } from "ws";
 import { Game } from "./Game";
+import { SocketManager, User } from "./SocketManager";
 
 export class GameManager {
   private games: Game[];
   private pendingUser: string | null;
-  private users: WebSocket[];
+  private users: User[];
   constructor() {
     this.games = [];
     this.pendingUser = null;
     this.users = [];
   }
-  addUser(user: WebSocket) {
+  addUser(user: User) {
     this.users.push(user);
     this.handleMessage(user);
   }
   removeUser(socket: WebSocket) {
-    this.users = this.users.filter((user) => user !== socket);
+    this.users = this.users.filter((user) => user.socket !== socket);
   }
-  private handleMessage(socket: WebSocket) {
-    socket.on("message", (data) => {
+  private handleMessage(user: User) {
+    user.socket.on("message", (data) => {
       const message = JSON.parse(data.toString());
       if (message.type === "init_game") {
         if (this.pendingUser) {
@@ -26,14 +27,13 @@ export class GameManager {
           const game = new Game(this.pendingUser, data);
           this.games.push(game);
           const roomId = game.gameId;
-          console.log("Game Started");
           const gameStartedMessage = JSON.stringify({
             type: "game_started",
             payload: { roomId },
           });
-          this.users.forEach((socket) => {
-            socket.send(gameStartedMessage);
-          });
+          SocketManager.getInstance().addUser(user, roomId);
+          SocketManager.getInstance().broadCast(roomId, gameStartedMessage);
+          console.log("Game Started");
           this.pendingUser = null;
         } else {
           this.pendingUser = message.userId;
@@ -44,7 +44,7 @@ export class GameManager {
         const player: string = message.player;
         const game = this.games.find((game) => game.gameId === gameId.trim());
         if (game) {
-          game.makeMove(socket, this.users, player, message.move);
+          game.makeMove(user.socket, player, message.move);
         } else {
           console.log("No game found with gameId:", gameId);
         }
