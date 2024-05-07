@@ -9,7 +9,6 @@ const gameManager = new GameManager();
 wss.on("connection", function connection(ws, req) {
   //@ts-ignore
   const userId = url.parse(req.url, true).query.userId;
-  console.log(userId);
   gameManager.addUser(new User(ws, userId as string));
   ws.on("close", () => gameManager.removeUser(ws));
 });

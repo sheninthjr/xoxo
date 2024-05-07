@@ -40,33 +40,25 @@ export class Game {
     console.log(symbol);
     try {
       if (this.board[rowIndex][colIndex] === "-") {
-        if (
-          this.symbolQueue.length > 0 &&
-          this.symbolQueue[this.symbolQueue.length - 1] === symbol
-        ) {
-          socket.send(JSON.stringify({ type: "board", board: this.board }));
-          console.log("Invalid move: Same symbol as last move");
-          return;
-        }
+        // if (
+        //   this.symbolQueue.length > 0 &&
+        //   this.symbolQueue[this.symbolQueue.length - 1] === symbol
+        // ) {
+        //   socket.send(JSON.stringify({ type: "board", board: this.board }));
+        //   console.log("Invalid move: Same symbol as last move");
+        //   return;
+        // }
         this.board[rowIndex][colIndex] = symbol;
-        socket.send(JSON.stringify({ type: "board", board: this.board }));
         console.log("Move pushed Successfully");
         const message = JSON.stringify({ type: "move_made", row, col, symbol });
-        SocketManager.getInstance().broadCast(this.gameId, message);
-        // userSocket.forEach((user) => user.send(message));
-        // this.symbolQueue.push(symbol);
-
-        // if (this.checkForWin(this.board, symbol)) {
-        //   userSocket.forEach((user) =>
-        //     user.send(
-        //       JSON.stringify({ type: "game_over", row, col, winner: symbol })
-        //     )
-        //   );
-        //   console.log(this.board);
-        //   console.log(symbol, "Winner");
-        // } else {
-        //   console.log(this.board);
-        // }
+        SocketManager.getInstance().broadcast(this.gameId, message);
+        if (this.checkForWin(this.board, symbol)) {
+          SocketManager.getInstance().broadcast(
+            this.gameId,
+            JSON.stringify({ type: "game_over", row, col, winner: symbol })
+          );
+        }
+        console.log(this.board);
       }
     } catch (e) {
       return;

@@ -4,45 +4,58 @@ import { SocketManager, User } from "./SocketManager";
 
 export class GameManager {
   private games: Game[];
-  private pendingUser: string | null;
+  private pendingGameId: string | null;
   private users: User[];
+
   constructor() {
     this.games = [];
-    this.pendingUser = null;
+    this.pendingGameId = null;
     this.users = [];
   }
+
   addUser(user: User) {
     this.users.push(user);
     this.handleMessage(user);
   }
+
   removeUser(socket: WebSocket) {
     this.users = this.users.filter((user) => user.socket !== socket);
   }
+
   private handleMessage(user: User) {
     user.socket.on("message", (data) => {
       const message = JSON.parse(data.toString());
       if (message.type === "init_game") {
-        if (this.pendingUser) {
-          const data: string = message.userId;
-          const game = new Game(this.pendingUser, data);
-          this.games.push(game);
+        if (this.pendingGameId) {
+          const game = this.games.find((x) => x.gameId === this.pendingGameId);
+          if (!game) {
+            console.error("Pending game not found");
+            return;
+          }
+          if (user.userId === game.player1) {
+            console.error("User is already part of the pending game");
+            return;
+          }
+          game.player2 = user.userId;
+          SocketManager.getInstance().addUser(user, game.gameId);
+          this.pendingGameId = null;
           const roomId = game.gameId;
           const gameStartedMessage = JSON.stringify({
             type: "game_started",
             payload: { roomId },
           });
-          SocketManager.getInstance().addUser(user, roomId);
-          SocketManager.getInstance().broadCast(roomId, gameStartedMessage);
-          console.log("Game Started");
-          this.pendingUser = null;
+          SocketManager.getInstance().broadcast(roomId, gameStartedMessage);
         } else {
-          this.pendingUser = message.userId;
+          const game = new Game(user.userId, null);
+          this.games.push(game);
+          this.pendingGameId = game.gameId;
+          SocketManager.getInstance().addUser(user, game.gameId);
         }
       }
       if (message.type === "move") {
         const gameId: string = message.gameId.gameId;
         const player: string = message.player;
-        const game = this.games.find((game) => game.gameId === gameId.trim());
+        const game = this.games.find((game) => game.gameId === gameId);
         if (game) {
           game.makeMove(user.socket, player, message.move);
         } else {
