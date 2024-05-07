@@ -40,7 +40,7 @@ export class SocketManager {
     this.userRoomMappping.set(user.userId, roomId);
   }
 
-  broadcast(roomId: string, message: string) {
+  broadcast(roomId: string, message: any) {
     const users = this.interestedSockets.get(roomId);
     if (!users) {
       console.error("No users in room?");

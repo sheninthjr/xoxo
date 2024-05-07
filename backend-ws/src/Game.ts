@@ -1,19 +1,17 @@
-import { WebSocket } from "ws";
 import { SocketManager } from "./SocketManager";
+
+interface GameQueueItem {
+  gameId: string;
+  symbol: string;
+}
 
 export class Game {
   public gameId: string;
   public player1: string;
   public player2: string | null;
   private board: string[][];
-  private startTime: Date;
-  private symbolQueue: string[];
-  constructor(
-    player1: string,
-    player2: string | null,
-    gameId?: string,
-    startTime?: Date
-  ) {
+  private gameQueue: GameQueueItem[];
+  constructor(player1: string, player2: string | null, gameId?: string) {
     this.player1 = player1;
     this.player2 = player2;
     this.gameId = gameId ?? crypto.randomUUID();
@@ -22,11 +20,9 @@ export class Game {
       ["-", "-", "-"],
       ["-", "-", "-"],
     ];
-    this.startTime = new Date();
-    this.symbolQueue = [];
+    this.gameQueue = [];
   }
   makeMove(
-    socket: WebSocket,
     player: string,
     move: {
       row: string;
@@ -40,14 +36,19 @@ export class Game {
     console.log(symbol);
     try {
       if (this.board[rowIndex][colIndex] === "-") {
-        // if (
-        //   this.symbolQueue.length > 0 &&
-        //   this.symbolQueue[this.symbolQueue.length - 1] === symbol
-        // ) {
-        //   socket.send(JSON.stringify({ type: "board", board: this.board }));
-        //   console.log("Invalid move: Same symbol as last move");
-        //   return;
-        // }
+        let lastMoveForGame = this.gameQueue.find(
+          (item) => item.gameId === this.gameId
+        );
+        if (!lastMoveForGame) {
+          lastMoveForGame = { gameId: this.gameId, symbol };
+          this.gameQueue.push(lastMoveForGame);
+        } else {
+          if (lastMoveForGame.symbol === symbol) {
+            console.log("Invalid move: Same symbol as last move");
+            return;
+          }
+          lastMoveForGame.symbol = symbol;
+        }
         this.board[rowIndex][colIndex] = symbol;
         console.log("Move pushed Successfully");
         const message = JSON.stringify({ type: "move_made", row, col, symbol });

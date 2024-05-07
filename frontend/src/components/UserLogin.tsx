@@ -8,7 +8,6 @@ export default function UserLogin() {
   const socket = useSocket();
   const navigate = useNavigate();
   const userId = useRecoilValue(userIdState);
-  console.log(userId);
   const startGame = () => {
     if (socket) {
       socket.send(

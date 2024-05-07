@@ -57,7 +57,7 @@ export class GameManager {
         const player: string = message.player;
         const game = this.games.find((game) => game.gameId === gameId);
         if (game) {
-          game.makeMove(user.socket, player, message.move);
+          game.makeMove(player, message.move);
         } else {
           console.log("No game found with gameId:", gameId);
         }
