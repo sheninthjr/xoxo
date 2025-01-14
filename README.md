@@ -1,4 +1,4 @@
-# XOXO Game using Websocket multiplayer
+# XOXO Multiplayer Game
 
 ![System Desgin](./frontend/public/System.png)
 
